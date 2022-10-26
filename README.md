@@ -60,68 +60,6 @@
 ![image](https://user-images.githubusercontent.com/62373163/198014631-a9889509-e273-414f-b3f6-17cccc7c4d4b.png)
 
 
-```py
-using UnityEngine;
-using Unity.MLAgents;
-using Unity.MLAgents.Sensors;
-using Unity.MLAgents.Actuators;
-
-public class RollerAgent : Agent
-{
-    Rigidbody rBody;
-
-    void Start()
-    {
-        rBody = GetComponent<Rigidbody>();
-    }
-
-    public Transform Target;
-
-    public override void OnEpisodeBegin()
-    {
-        if (this.transform.localPosition.y < 0)
-        {
-            this.rBody.angularVelocity = Vector3.zero;
-            this.rBody.velocity = Vector3.zero;
-            this.transform.localPosition = new Vector3(0, 0.5f, 0);
-        }
-
-        Target.localPosition = new Vector3(Random.value * 8-4, 0.5f, Random.value * 8-4);
-    }
-
-    public override void CollectObservations(VectorSensor sensor)
-    {
-        sensor.AddObservation(Target.localPosition);
-        sensor.AddObservation(this.transform.localPosition);
-        sensor.AddObservation(rBody.velocity.x);
-        sensor.AddObservation(rBody.velocity.z);
-    }
-
-    public float forceMultiplier = 10;
-
-    public override void OnActionReceived(ActionBuffers actionBuffers)
-    {
-        Vector3 controlSignal = Vector3.zero;
-        controlSignal.x = actionBuffers.ContinuousActions[0];
-        controlSignal.z = actionBuffers.ContinuousActions[1];
-        rBody.AddForce(controlSignal * forceMultiplier);
-
-        float distanceToTarget = Vector3.Distance(this.transform.localPosition, Target.localPosition);
-
-        if(distanceToTarget < 1.42f)
-        {
-            SetReward(1.0f);
-            EndEpisode();
-        }
-        else if (this.transform.localPosition.y < 0)
-        {
-            EndEpisode();
-        }
-    }
-}
-
-```
-
 В корень проекта добавила файл конфигурации нейронной сети, доступный в папке с файлами проекта. 
 Запустила ml-агента и запустила сцену в Unity.
 
@@ -132,38 +70,11 @@ public class RollerAgent : Agent
 Чем больше количество копий модели, тем меньше времени требуется на её обучение.
 
 
-```py
-
-behaviors:
-  RollerBall:
-    trainer_type: ppo
-    hyperparameters:
-      batch_size: 10
-      buffer_size: 100
-      learning_rate: 3.0e-4
-      beta: 5.0e-4
-      epsilon: 0.2
-      lambd: 0.99
-      num_epoch: 3
-      learning_rate_schedule: linear
-    network_settings:
-      normalize: false
-      hidden_units: 128
-      num_layers: 2
-    reward_signals:
-      extrinsic:
-        gamma: 0.99
-        strength: 1.0
-    max_steps: 500000
-    time_horizon: 64
-    summary_freq: 10000
-    
-```
-
 ## Задание 2
 ### Подробно опишите каждую строку файла конфигурации нейронной сети, доступного в папке с файлами проекта по ссылке. Самостоятельно найдите информацию о компонентах Decision Requester, Behavior Parameters, добавленных сфере.
 
 ```py
+
 behaviors: #К какому компоненту обращаемся
   RollerBall: #имя компонента
     trainer_type: ppo #тип тренера (proximal policy optomozation)
@@ -187,17 +98,18 @@ behaviors: #К какому компоненту обращаемся
     max_steps: 500000 #кол-во шагов моделирования, умноженных на частоту кадров, выполняемых в процессе обучения
     time_horizon: 64 #временной отрезок
     summary_freq: 10000 #частота сохранения статистики обучения
-    ```
+    
+  ```
     
    DecisionRequester запрашивает принятие решения на основе сделанных наблюдений через определенные промежутки времени. Иными словами, DecisionRequester определяет, сколько шагов Академии должно быть выполнено, прежде чем будет запрошено решение.
-BehaviorParameters определяет, сколько наблюдений мы принимаем и какую форму будут принимать выводимые действия.
+BehaviorParameters определяет количество наблюдений и форму выводимых действий.
 BehaviorType имеет три варианта: эвристический (heuristic), по умолчанию (default) и вывод (inference). При установке значения по умолчанию, если нейронная сеть была сгенерирована, агент будет выполнять Inference, поскольку он использует нейронную сеть для принятия решений. Когда нейронная сеть не предусмотрена, она будет использовать эвристику. Эвристический метод можно рассматривать как традиционный подход к искусственному интеллекту, при котором программист вводит все возможные команды непосредственно в объект. Если установлено значение Heuristic only, агент будет запускать все, что находится в эвристическом методе.
 
 
 ## Задание 3
 ### Доработайте сцену и обучите ML-Agent таким образом, чтобы шар перемещался между двумя кубами разного цвета. Кубы должны, как и впервом задании, случайно изменять кооринаты на плоскости. 
 
-- Код нового С#-скрипта:
+Новый С#-скрипт:
 
 ```py
 
@@ -290,12 +202,9 @@ public class RollerAgent : Agent
 
 ```
 
--ДОПОЛНИТЬ
-
-
 ## Выводы
 
-В ходе выполонения данной лабораторной работы я ознакомилась с основами использования ML агента для оптимизации траектории движения интеллектуального агента.
+В ходе выполонения данной лабораторной работы я ознакомилась с основами использования ML-агента для оптимизации траектории движения интеллектуального агента, узнала о процессе обучения нейронных сетей и их настройках, ознакомилась с документацией.
 
 Игровой баланс - соблюдение равновесия между различными экономическими показателями в игре. Это включает в себя настройку сложности, условий выигрыша / проигрыша, игровых состояний, баланса экономики и так далее, чтобы работать в тандеме друг с другом. В таком случае системы машинного обучения можно использовать для создания интеллектуальных агентов с оптимальной сложностью прохождения для игрока или подбора коэффициентов в экономической системе со множеством параметров.
 
